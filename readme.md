@@ -2,10 +2,9 @@
 참고 : https://threejs.org/examples/#webgl_interactive_voxelpainter
 
 * 다음 step 
-1. lycat 클릭시 해당 위치 알아내기
-2. lycat 클릭시 해당 위치에 plane(말풍선) 을 생성
-3. 그 plane(말풍선)에 texture 바르기
-4. lycat 이나 plane(말풍선)에 클릭시 plane 삭제
+1. lycat 클릭시 해당 위치에 plane(말풍선) 을 생성
+2. 그 plane(말풍선)에 texture 바르기
+3. lycat 이나 plane(말풍선)에 클릭시 plane 삭제
 
 camera helper - https://codepen.io/dimorin/pen/mdQorwG
 

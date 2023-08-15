@@ -16,6 +16,7 @@ let cubeGeo, cubeMaterial;
 let objects = [];
 
 let lycat, innerwall, outwall;
+var selectedMesh = null;
 
 if(WebGL.isWebGLAvailable()){    
     init();
@@ -42,6 +43,7 @@ function init(){
         scene.add(lycat);
         lycat.scale.set(0.02,0.02,0.02);
         lycat.position.set(2,0,2);
+        lycat.name = "lycat";
     });
     gltfLoader.load('./src/models/innerwall.glb', function(gltf){
         innerwall = gltf.scene;
@@ -112,11 +114,11 @@ function init(){
 
     // axes
     const axesHelper = new THREE.AxesHelper(10);
-    scene.add(axesHelper);
+    //scene.add(axesHelper);
 
     // grid
     const gridHelper = new THREE.GridHelper();
-	scene.add( gridHelper );
+	//scene.add( gridHelper );
 
     controls = new OrbitControls(camera, $result);
     controls.update();
@@ -184,17 +186,37 @@ function onPointerMove(event){
 }
 
 function onPointerDown(event){
+    // 마우스 클릭 위치를 표준화합니다.
     pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
     // 광선을 올바른 방향으로 향하게 하기 위해 setFromCamera를 사용한다.
     // 마우스가 raycaster의 origin, 카메라가 direction 으로 설정되어
     // 마우스를 기준으로 ray를 cast 하고, 마우스가 hover 됨에 따라  ray에 교차된 object 정보를 얻게된다.
     raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects(objects, false);
-    if(intersects.length > 0){
+    const intersects = raycaster.intersectObjects(scene.children);
+    
+    // 교차한 객체가 있는 경우 선택된 메시를 갱신합니다.
+    if (intersects.length > 0) {
+        selectedMesh = intersects[0].object;
+        if (selectedMesh.parent.name === "lycat") {
+            if(isShiftDown){    // shift 누른채 클릭하면 색상 되돌리기
+                objects.splice(objects.indexOf(selectedMesh),1);
+                console.log(objects);
+            }else{
+                //console.log(selectedMesh.material.color);
+                selectedMesh.material.color.set(0x0000ff);
+                objects.push(selectedMesh);
+                console.log(objects);
+            }
+            
+        }
+        
+        
+        render();
+    }
+    /* if(intersects.length > 0){
         const intersect = intersects[0];
-        console.log(intersect.point);
-        console.log(intersect.face.normal);
-        /* if(isShiftDown){    // shift 누른채 클릭하면 cube 삭제됨
+        
+         if(isShiftDown){    // shift 누른채 클릭하면 cube 삭제됨
             if(intersect.object != plane){
                 scene.remove(intersect.object);
                 objects.splice(objects.indexOf(intersect.object),1);
@@ -205,9 +227,9 @@ function onPointerDown(event){
             voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25); // 50 단위씩 위치하게 하기 위함.
             scene.add(voxel);
             objects.push(voxel);
-        } */        
+        }     
         render();
-    }
+    } */
 }
 
 function onDocumentKeyDown(event){
