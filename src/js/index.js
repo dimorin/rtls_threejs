@@ -30,41 +30,47 @@ function init(){
     $result = document.querySelector('#result');
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color('lightgoldenrodyellow');
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
-    camera.position.set(0,5,5);
+    camera.position.set(10,20,20);
     camera.lookAt(0,0,0);
     
     //
     const gltfLoader = new GLTFLoader();
     gltfLoader.load('./src/models/Lycat-3d.glb', function(gltf){
         lycat = gltf.scene;
+        lycat.scale.set(0.1,0.1,0.1);
         scene.add(lycat);
-        lycat.scale.set(0.02,0.02,0.02);
+        
+        /* const boundingBox = new THREE.Box3().setFromObject(lycat);
+        const size = new THREE.Vector3();
+        boundingBox.getSize(size);
+        console.log('lycat size:', size.x, size.y, size.z); */
         lycat.position.set(2,0,2);
         lycat.name = "lycat";
     });
     gltfLoader.load('./src/models/innerwall.glb', function(gltf){
         innerwall = gltf.scene;
-        innerwall.scale.set(10,10,10);
+        innerwall.scale.set(70,70,70);
         scene.add(innerwall);
         // 모델의 바운딩 박스를 얻어 크기를 계산
         /* const boundingBox = new THREE.Box3().setFromObject(innerwall);
         const size = new THREE.Vector3();
         boundingBox.getSize(size);
         console.log('innerwall size:', size.x, size.y, size.z); */
-        innerwall.position.set(0,0,2.3081374168395996);
+        innerwall.position.set(0,0,16.156961917877197);
     });
     gltfLoader.load('./src/models/outwall.glb', function(gltf){
         outwall = gltf.scene;
+        outwall.scale.set(7,7,7);
         scene.add(outwall);
         // 모델의 바운딩 박스를 얻어 크기를 계산
         /* const boundingBox = new THREE.Box3().setFromObject(outwall);
         const size = new THREE.Vector3();
         boundingBox.getSize(size);
         console.log('outwall size:', size.x, size.y, size.z); */
-        outwall.position.set(0,0,2.4125397205352783);
+        outwall.position.set(0,0,16.88777804374695);
     });
             
     // roll-over helpers
@@ -87,10 +93,10 @@ function init(){
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
-    const geometry = new THREE.PlaneGeometry(10, 10);
+    const geometry = new THREE.PlaneGeometry(80, 80);
     geometry.rotateX(-Math.PI/2);
 
-    plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+    plane = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
         //visible:false
     }));
     scene.add(plane);
@@ -109,7 +115,7 @@ function init(){
     scene.add(ambientLight);
     
     const directionallight = new THREE.DirectionalLight(0xffffff, 3);
-    directionallight.position.set(0, 5, 0).normalize();
+    directionallight.position.set(0, 200, 0).normalize();
     scene.add(directionallight);
 
     // axes
@@ -117,21 +123,25 @@ function init(){
     //scene.add(axesHelper);
 
     // grid
-    const gridHelper = new THREE.GridHelper();
-	//scene.add( gridHelper );
+    const gridHelper = new THREE.GridHelper(80,8); // 80 미터, 8 등분, 한 칸이 10미터
+	scene.add( gridHelper );
 
     controls = new OrbitControls(camera, $result);
+    controls.minDistance = 10;
+    controls.maxDistance = 80;
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI/2;
     controls.update();
     
     const gui = new GUI();
     const folder1 = gui.addFolder('camera.position');
-    folder1.add(camera.position, 'x', -10, 10);
-    folder1.add(camera.position, 'y', -10, 10);
-    folder1.add(camera.position, 'z', -10, 10);
+    folder1.add(camera.position, 'x', -100, 100);
+    folder1.add(camera.position, 'y', -100, 100);
+    folder1.add(camera.position, 'z', -100, 100);
     const folder2 = gui.addFolder('directionallight.position');
-    folder2.add(directionallight.position, 'x', -10, 10);
-    folder2.add(directionallight.position, 'y', -10, 10);
-    folder2.add(directionallight.position, 'z', -10, 10);
+    folder2.add(directionallight.position, 'x', -100, 100);
+    folder2.add(directionallight.position, 'y', -100, 100);
+    folder2.add(directionallight.position, 'z', -100, 100);
     const folder3 = gui.addFolder('Orbit Controls');
     folder3.add(controls,'enabled');
     folder3.add(controls,'enableDamping');
@@ -140,6 +150,7 @@ function init(){
     folder3.add(controls,'enableZoom');
     folder3.add(controls,'minPolarAngle');
     folder3.add(controls,'maxPolarAngle');
+    
 
     renderer = new THREE.WebGLRenderer({
         canvas:$result,
@@ -156,6 +167,41 @@ function init(){
     document.addEventListener('keyup', onDocumentKeyUp);
 
     window.addEventListener('resize', onWindowResize);   
+
+    const zoomInButton = document.getElementById("zoom-in");
+    const zoomOutButton = document.getElementById("zoom-out");
+    const zoomInFunction = (e) => {
+        const fov = getFov();
+        camera.fov = clickZoom(fov, "zoomIn");
+        camera.updateProjectionMatrix();
+    };
+    zoomInButton.addEventListener("click", zoomInFunction);
+
+    const zoomOutFunction = (e) => {
+        const fov = getFov();
+        camera.fov = clickZoom(fov, "zoomOut");
+        camera.updateProjectionMatrix();
+    };
+      
+    zoomOutButton.addEventListener("click", zoomOutFunction);
+    const clickZoom = (value, zoomType) => {
+        if (value >= 10 && zoomType === "zoomIn") {
+          return value - 10;
+        } else if (value <= 80 && zoomType === "zoomOut") {
+          return value + 10;
+        } else {
+          return value;
+        }
+    };
+      
+    const getFov = () => {
+        return Math.floor(
+            (2 *
+            Math.atan(camera.getFilmHeight() / 2 / camera.getFocalLength()) *
+            180) /
+            Math.PI
+        );
+    };
 }
 
 function animate(){
@@ -247,4 +293,6 @@ function onDocumentKeyUp(event){
 function render() {
     renderer.render( scene, camera );
 }
+
+
 
