@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./src/css/style.css">
+    <!--es.modules.shism 폴리필-->
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@^0.154.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@^0.154.0/examples/jsm/",
+                "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.18/+esm",
+                "three-pathfinding" : "https://cdn.jsdelivr.net/npm/three-pathfinding/+esm"
+                
+            }
+        }
+    </script> 
+</head>
+<body>    
+    <canvas id="result"></canvas>   
+    <div style="position:fixed;left:0;top:0;padding:10px;">
+        <h1>길찾기</h1>
+        <label><input type="radio" name="area" value="room0"> <span>현관</span></label>
+        <label><input type="radio" name="area" value="room1"> <span>회의실</span></label>
+        <label><input type="radio" name="area" value="room2"> <span>연구소</span></label>
+        <label><input type="radio" name="area" value="room3"> <span>공용룸</span></label>
+        <label><input type="radio" name="area" value="room4"> <span>대표이사실</span></label>
+    </div>
+    <!-- <div class="ui">
+        <button class="btn" id="zoom-out">-</button>
+        <button class="btn" id="zoom-in">+</button>
+    </div> -->
+    <script src="./src/js/pathfinding_radio_multi.js" type="module"></script>
+</body>
+</html>
+<!-- "three-pathfinding" : "../../node_modules/three-pathfinding/dist/three-pathfinding.module.js" -->
+<!-- <div>출처 : https://youtu.be/0pCpRvoOTBs?si=QXoJT7DdbCvDN9WQ</div> -->
