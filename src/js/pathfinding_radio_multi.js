@@ -119,14 +119,14 @@ function init(){
     
     var workers_mesh = [];
     workers.forEach(function(worker){
-        workers_mesh.push(new Agent({name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false}));
+        workers_mesh.push(new Agent({name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));
     });
 
     setInterval(function(){
         workers_mesh.forEach(function(worker_mesh){
             var new_position = new THREE.Vector3((Math.random()*20)+10, 0, Math.floor(Math.random()*10)+2);
             if(navmesh){
-                worker_mesh.makeNavPath(worker_mesh.agent_mesh.position, new_position, ZONE);
+                worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
             }
         })
     }, 3000);    
@@ -166,7 +166,7 @@ function init(){
     var areas = document.querySelectorAll('input[name=area]');
     areas.forEach(function(area){
         area.addEventListener('change', function(){               
-            agent.makeNavPath(agent.agent_mesh.position, scene.getObjectByName(area.value).position, ZONE);
+            agent.findNav(agent.agent_mesh.position, scene.getObjectByName(area.value).position, ZONE);
         });
     });
 
@@ -178,7 +178,7 @@ function init(){
         const found = intersect(clickMouse);
         if (found.length > 0) {
             let target_position = found[0].point;     
-            agent.makeNavPath(agent.agent_mesh.position, target_position, ZONE);
+            agent.findNav(agent.agent_mesh.position, target_position, ZONE);
         }
     });
 
@@ -218,6 +218,7 @@ function Agent(option){
     this.name = option.name;    
     this.speed = 3;
     this.isPathfindingHelper = (option.isPathfindingHelper === false) ? false : true;
+    this.type = option.type;
     this.agent_mesh = new THREE.Mesh(new THREE.CylinderGeometry(this.agentRadius, this.agentRadius, this.agentHeight), new THREE.MeshPhongMaterial({color:option.color}));
     scene.add(this.agent_mesh);           
     
@@ -234,10 +235,19 @@ function Agent(option){
     
     this.groupID;
     this.navepath;    
-    this.makeNavPath = function(a, b, zone){
+    this.findNav = function(a, b, zone){
         // Find path from A(agentGroup.position) to B(target_position).               
         this.groupID = this.pathfinding.getGroup(zone, a);//주어진 위치에 대해 가장 가까운 노드 그룹 ID를 반환합니다.         
-        this.navpath = this.pathfinding.findPath(a, b, zone, this.groupID);//지정된 시작점과 끝점 사이의 경로를 반환합니다. 
+        
+        // find closest node to agent, just in case agent is out of bounds
+        const closestA = this.pathfinding.getClosestNode(a, zone, this.groupID);//navmesh에서 a 위치와 가장 가까운 노드
+        const closestB = this.pathfinding.getClosestNode(b, zone, this.groupID);//navmesh에서 b 위치와 가장 가까운 노드
+        if(this.type === 'random'){
+            this.navpath = this.pathfinding.findPath(closestA.centroid, closestB.centroid, zone, this.groupID);
+        }else{
+            this.navpath = this.pathfinding.findPath(a, b, zone, this.groupID);//지정된 시작점과 끝점 사이의 경로를 반환합니다.
+        }
+        
 
         if (this.navpath) {
             this.pathfindinghelper.reset();
