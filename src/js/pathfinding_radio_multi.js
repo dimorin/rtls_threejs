@@ -20,7 +20,6 @@ if(WebGL.isWebGLAvailable()){
 
 function init(){    
     $result = document.querySelector('#result');
-
     // SCENE
     scene = new THREE.Scene();
     scene.background = new THREE.Color('lightgoldenrodyellow');
@@ -53,6 +52,9 @@ function init(){
     orbitControls.minPolarAngle = Math.PI/4;        // prevent to down view
     orbitControls.maxPolarAngle = Math.PI/2 - 0.05; // prevent camera below ground
     orbitControls.update();
+    orbitControls.addEventListener('change', function() {
+        //onCameraChange();
+    });
 
     // LIGHTS
     const dLight = new THREE.DirectionalLight('white', 0.8);
@@ -106,20 +108,22 @@ function init(){
     scene.add(room4);
 
     // AGENT
-    var agent = new Agent({name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
+    var agent = new Agent({objectType:'man', name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
 
     var workers = [
-        {name:'tom',color:'yellow',x:10,z:5},
-        {name:'bob',color:'blue',x:15,z:8},
-        {name:'duke',color:'orange',x:30,z:10},
-        {name:'jake',color:'olive',x:20,z:15},
-        {name:'brad',color:'purple',x:25,z:14},
-        {name:'mary',color:'pink',x:28,z:12}
+        {objectType:'man', name:'tom',color:'yellow',x:10,z:5},
+        {objectType:'man', name:'bob',color:'blue',x:15,z:8},
+        {objectType:'man', name:'duke',color:'orange',x:30,z:10},
+        {objectType:'man', name:'jake',color:'olive',x:20,z:15},
+        {objectType:'man', name:'brad',color:'purple',x:25,z:14},
+        {objectType:'man', name:'mary',color:'pink',x:28,z:12}
     ]
     
     var workers_mesh = [];
     workers.forEach(function(worker){
-        workers_mesh.push(new Agent({name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));
+        workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));
+
+        
     });
 
     setInterval(function(){
@@ -176,7 +180,9 @@ function init(){
         clickMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     
         const found = intersect(clickMouse);
+        
         if (found.length > 0) {
+            
             let target_position = found[0].point;     
             agent.findNav(agent.agent_mesh.position, target_position, ZONE);
         }
@@ -201,6 +207,8 @@ function init(){
     window.addEventListener('resize', onWindowResize);   
 }
 
+
+
 function onWindowResize(){
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -215,11 +223,14 @@ function render() {
 function Agent(option){     
     this.agentHeight = 1.0;
     this.agentRadius = 0.2;   
-    this.name = option.name;    
+    this.name = option.name;   
+    this.objectType = option.objectType; 
     this.speed = 3;
     this.isPathfindingHelper = (option.isPathfindingHelper === false) ? false : true;
     this.type = option.type;
     this.agent_mesh = new THREE.Mesh(new THREE.CylinderGeometry(this.agentRadius, this.agentRadius, this.agentHeight), new THREE.MeshPhongMaterial({color:option.color}));
+    this.agent_mesh.name = this.name;
+    this.agent_mesh.objectType = this.objectType;
     scene.add(this.agent_mesh);           
     
     this.setPosition = function(x,z){

@@ -54,6 +54,7 @@ function init(){
     orbitControls.update();
     orbitControls.addEventListener('change', function() {
         onCameraChange();
+        //mesh.position.copy(orbitControls.target.clone());
     });
 
     const gui = new GUI();
@@ -94,91 +95,161 @@ function init(){
 
     // 현관
     const room0 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
-    room0.name = 'room0';
-    room0.position.set(9.2,0.1,10.6);
+    room0.name = 'room0';    
     room0.rotation.x = THREE.MathUtils.degToRad(90);
-    scene.add(room0);
+    
     // 회의실
     const room1 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
-    room1.name = 'room1';
-    room1.position.set(2.8,0.1,3);
+    room1.name = 'room1';    
     room1.rotation.x = THREE.MathUtils.degToRad(90);
-    scene.add(room1);
+    
     // 연구소
     const room2 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
-    room2.name = 'room2';
-    room2.position.set(25,0.1,14);
+    room2.name = 'room2';    
     room2.rotation.x = THREE.MathUtils.degToRad(90);
-    scene.add(room2);
+    
     // 공용룸
     const room3 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
-    room3.name = 'room3';
-    room3.position.set(28,0.1,5);
+    room3.name = 'room3';    
     room3.rotation.x = THREE.MathUtils.degToRad(90);
-    scene.add(room3);
+    
     // 대표이사실
     const room4 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
-    room4.name = 'room4';
-    room4.position.set(29,0.1,14);
-    room4.rotation.x = THREE.MathUtils.degToRad(90);
-    scene.add(room4);
+    room4.name = 'room4';    
+    room4.rotation.x = THREE.MathUtils.degToRad(90);    
 
     // AGENT
-    var agent = new Agent({objectType:'man', name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
+    var agent;
 
-    var workers = [
-        {objectType:'man', name:'tom',color:'yellow',x:10,z:5},
-        {objectType:'man', name:'bob',color:'blue',x:15,z:8},
-        {objectType:'man', name:'duke',color:'orange',x:30,z:10},
-        {objectType:'man', name:'jake',color:'olive',x:20,z:15},
-        {objectType:'man', name:'brad',color:'purple',x:25,z:14},
-        {objectType:'man', name:'mary',color:'pink',x:28,z:12}
-    ]
+    var workers;
     
     var workers_mesh = [];
-    workers.forEach(function(worker){
-        workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));        
-    });
-
     
-    for(var i = 0; i <= workers_mesh.length; i++){
-        
-        
-        var mesh;
-        if(i === workers_mesh.length){
-            mesh = agent.agent_mesh;
-        }else{
-            mesh = workers_mesh[i].agent_mesh;
-        }
-        var divElem = document.createElement('div');
-        divElem.style.position = 'absolute';
-        divElem.style.color = 'black';
-        divElem.innerHTML = mesh.name;
-        document.body.appendChild(divElem);
-        var divObj = new THREE.Object3D();
-        //divObj.position = mesh.vertices[0].clone();
-        mesh.add(divObj);
-        
-        var objData = {
-            mesh: mesh,
-            divElem: divElem,
-            divObj: divObj
-        };
-        objArr.push(objData);
-    }
-    //console.log(objArr);
-
-    setInterval(function(){
-        workers_mesh.forEach(function(worker_mesh){
-            var new_position = new THREE.Vector3((Math.random()*20)+10, 0, Math.floor(Math.random()*10)+2);
-            if(navmesh){
-                worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
-            }
-        })
-    }, 3000);    
  
-    const loader = new GLTFLoader();
-    loader.load('./src/models/office_edgetoface.glb', function(gltf){
+
+     
+ 
+    // Create level
+    const pathfinding = new Pathfinding();
+    const ZONE = 'level1';
+    let navmesh;
+
+    async function loadMap(){
+        const gltfLoader = new GLTFLoader();
+        const promises = [
+            gltfLoader.loadAsync("./src/models/office_edgetoface.glb"),
+            gltfLoader.loadAsync("./src/models/office_edgetoface_navmesh.glb"),
+        ];      
+        const [...model] = await Promise.all(promises);
+
+        // 지도와 지도의 navmesh가 모두 로드 된 후 할 일
+
+        // 1.
+        let office = model[0].scene;        
+        
+
+        const boundingBox = new THREE.Box3().setFromObject(office);
+        const size = new THREE.Vector3();
+        boundingBox.getSize(size);
+        let offsetX = -size.x /2;   
+        let offsetZ = -size.z/2;
+        //console.log('offsetX : '+offsetX+' , offsetZ : '+offsetZ);
+        office.position.x = offsetX;
+        office.position.z = offsetZ;
+        scene.add(office);
+
+        room0.position.set(9.2+offsetX,0.1,10.6+offsetZ);
+        scene.add(room0);
+        room1.position.set(2.8+offsetX,0.1,3+offsetZ);
+        scene.add(room1);
+        room2.position.set(25+offsetX,0.1,14+offsetZ);
+        scene.add(room2);
+        room3.position.set(28+offsetX,0.1,5+offsetZ);
+        scene.add(room3);
+        room4.position.set(29+offsetX,0.1,14+offsetZ);
+        scene.add(room4);
+
+        
+
+        // 2.
+        let office_navmesh = model[1].scene;        
+        //office_navmesh.position.x = offsetX;
+        //office_navmesh.position.z = offsetZ;
+        //scene.add(office_navmesh);
+        
+
+
+        agent = new Agent({objectType:'man', name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
+        workers = [
+            {objectType:'man', name:'tom',color:'yellow',x:10+offsetX,z:5+offsetZ},
+            {objectType:'man', name:'bob',color:'blue',x:15+offsetX,z:8+offsetZ},
+            {objectType:'man', name:'duke',color:'orange',x:30+offsetX,z:10+offsetZ},
+            {objectType:'man', name:'jake',color:'olive',x:20+offsetX,z:15+offsetZ},
+            {objectType:'man', name:'brad',color:'purple',x:25+offsetX,z:14+offsetZ},
+            {objectType:'man', name:'mary',color:'pink',x:28+offsetX,z:12+offsetZ}
+        ];
+
+        workers.forEach(function(worker){
+            workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));        
+        });
+
+        office_navmesh.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
+            
+            if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {
+                
+                navmesh = node.children[0];
+                //console.log(navmesh)
+                navmesh.geometry.translate(offsetX,0,offsetZ);
+                
+                //scene.add(navmesh);
+                pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));// Create level의 일환
+                agent.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
+                workers_mesh.forEach(function(worker_mesh){
+                    worker_mesh.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
+                })
+            }
+        });
+        
+        for(var i = 0; i <= workers_mesh.length; i++){        
+            var mesh;
+            if(i === workers_mesh.length){
+                mesh = agent.agent_mesh;
+            }else{
+                mesh = workers_mesh[i].agent_mesh;
+            }
+            var divElem = document.createElement('div');
+            divElem.style.position = 'absolute';
+            divElem.style.color = 'black';
+            divElem.innerHTML = mesh.name;
+            document.body.appendChild(divElem);
+            var divObj = new THREE.Object3D();
+            //divObj.position = mesh.vertices[0].clone();
+            mesh.add(divObj);
+            
+            var objData = {
+                mesh: mesh,
+                divElem: divElem,
+                divObj: divObj
+            };
+            objArr.push(objData);
+        }
+
+
+        // 3.
+        setInterval(function(){
+            workers_mesh.forEach(function(worker_mesh){
+                var new_position = new THREE.Vector3((Math.random()*20)+10+offsetX, 0, Math.floor(Math.random()*10)+2+offsetZ);
+                if(navmesh){
+                    worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
+                }
+            })
+        }, 3000);   
+    }
+    
+    loadMap();
+
+
+    /* gltfLoader.load('./src/models/office_edgetoface.glb', function(gltf){
         let office = gltf.scene;
         scene.add(office);
         const boundingBox = new THREE.Box3().setFromObject(office);
@@ -188,14 +259,14 @@ function init(){
         //office.position.x = -size.x /2;
         //office.position.z = -size.z/2;
         console.log("---load office");
-    });
+    }); */
  
     // Create level
-    const pathfinding = new Pathfinding();
+    /* const pathfinding = new Pathfinding();
     const ZONE = 'level1';
     let navmesh;  
     
-    loader.load('./src/models/office_edgetoface_navmesh.glb', function(gltf){    
+    gltfLoader.load('./src/models/office_edgetoface_navmesh.glb', function(gltf){    
         console.log("---load office nav mesh");
         gltf.scene.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
             if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {
@@ -207,7 +278,7 @@ function init(){
                 })
             }
         });
-    });
+    }); */
     
     // RAYCASTING
     const raycaster = new THREE.Raycaster(); // create once
@@ -243,7 +314,10 @@ function init(){
     const clock = new THREE.Clock();
     function gameLoop(){        
         var delta = clock.getDelta();
-        agent.move(delta);
+        if(agent){
+            agent.move(delta);
+        }
+        
 
         workers_mesh.forEach(function(worker_mesh){
             worker_mesh.move(delta);
@@ -270,6 +344,11 @@ function onCameraChange()
         
     });
 }
+
+
+
+
+
 function toScreenPosition(obj, camera)
 {
     var vector = new THREE.Vector3();
@@ -358,7 +437,7 @@ function Agent(option){
     
         let targetPosition = this.navpath[ 0 ];
         const distance = targetPosition.clone().sub( this.agent_mesh.position );
- 
+        
         if (distance.lengthSq() > 0.05 * 0.05) {
             distance.normalize();
             // Move player to target

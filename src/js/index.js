@@ -2,8 +2,15 @@ import * as THREE from "three";
 import WebGL from "three/addons/capabilities/WebGL.js"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import {FontLoader} from 'three/addons/loaders/FontLoader.js';
 /* import * as dat from '../../node_modules/lil-gui/dist/lil-gui.esm.js' */
 import GUI from 'lil-gui';
+import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
+const pathfinding = new Pathfinding();
+console.log(pathfinding);
+const pathfindinghelper = new PathfindingHelper();
+console.log(pathfindinghelper);
 
 let $result;
 let scene, camera, renderer, controls;
@@ -14,8 +21,9 @@ let rollOverMesh, rollOverMaterial;
 let cubeGeo, cubeMaterial;
 
 let objects = [];
+let objects_color = []; // 색상 원복시 사용
 
-let lycat, innerwall, outwall;
+let desk, lycat, innerwall, outwall;
 var selectedMesh = null;
 
 if(WebGL.isWebGLAvailable()){    
@@ -38,6 +46,14 @@ function init(){
     
     //
     const gltfLoader = new GLTFLoader();
+    gltfLoader.load('./src/models/desk.glb', function(gltf){
+        desk = gltf.scene;
+        desk.scale.set(1, 1, 1);
+        scene.add(desk);
+        
+        desk.position.set(8,1,8);
+        //lycat.name = "lycat";
+    });
     gltfLoader.load('./src/models/Lycat-3d.glb', function(gltf){
         lycat = gltf.scene;
         lycat.scale.set(0.1,0.1,0.1);
@@ -60,6 +76,7 @@ function init(){
         boundingBox.getSize(size);
         console.log('innerwall size:', size.x, size.y, size.z); */
         innerwall.position.set(0,0,16.156961917877197);
+        innerwall.name = "innerwall";
     });
     gltfLoader.load('./src/models/outwall.glb', function(gltf){
         outwall = gltf.scene;
@@ -71,10 +88,33 @@ function init(){
         boundingBox.getSize(size);
         console.log('outwall size:', size.x, size.y, size.z); */
         outwall.position.set(0,0,16.88777804374695);
+        outwall.name = "outwall";
+    });
+
+    let fontLoader = new FontLoader();
+    fontLoader.load("Do Hyeon_Regular.json", (font) => {
+        let geometry = new TextGeometry(
+            "GIS Devloper, 홍길동",
+            { 
+                font: font,
+                size: 1,
+                height: 0,
+                curveSegments: 12
+            }
+        );
+        geometry.computeBoundingBox();
+        let xMid = -0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+        geometry.translate( xMid, 0, 0 );
+        let material = new THREE.MeshBasicMaterial({
+            color: 0x000000, 
+        });
+        let mesh = new THREE.Mesh(geometry, material);
+        
+        scene.add(mesh);       
     });
             
     // roll-over helpers
-    const rollOverGeo = new THREE.BoxGeometry(50,50,50);
+    const rollOverGeo = new THREE.BoxGeometry(10,10,10);
     rollOverMaterial = new THREE.MeshBasicMaterial({
         color:0xff0000,
         opacity:0.5,
@@ -84,7 +124,7 @@ function init(){
     //scene.add(rollOverMesh);
 
     // cubes
-    cubeGeo = new THREE.BoxGeometry(50,50,50);
+    cubeGeo = new THREE.PlaneGeometry(1,1,1);
     cubeMaterial = new THREE.MeshLambertMaterial({
         color:0xfeb74c
     });
@@ -99,16 +139,17 @@ function init(){
     plane = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
         //visible:false
     }));
+    plane.name="floor";
     scene.add(plane);
 
-    objects.push(plane);
+    //objects.push(plane);
 
-    const texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/132.png' ); 
+    /* const texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/132.png' ); 
     const test_plane_material = new THREE.MeshBasicMaterial( { map:texture, transparent: true } );
     let test_plane_geo = new THREE.PlaneGeometry(0.5,0.5);
     test_plane_geo.rotateX(-Math.PI/2);
     let test_plane = new THREE.Mesh(test_plane_geo, test_plane_material);
-    scene.add(test_plane);
+    scene.add(test_plane); */
 
     // lights
     const ambientLight = new THREE.AmbientLight(0x606060, 3);
@@ -226,7 +267,7 @@ function onPointerMove(event){
         // face:면
         // normal : 삼차원 공간에서 공간에 있는 평면 위의 한 점을 지나면서 그 평면에 수직인 직선
         rollOverMesh.position.copy(intersect.point).add(intersect.face.normal); 
-        rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+        rollOverMesh.position.divideScalar(10).floor().multiplyScalar(10).addScalar(10);
         render();
     }
 }
@@ -243,17 +284,83 @@ function onPointerDown(event){
     // 교차한 객체가 있는 경우 선택된 메시를 갱신합니다.
     if (intersects.length > 0) {
         selectedMesh = intersects[0].object;
+        
         if (selectedMesh.parent.name === "lycat") {
-            if(isShiftDown){    // shift 누른채 클릭하면 색상 되돌리기
-                objects.splice(objects.indexOf(selectedMesh),1);
+            
+            if(isShiftDown){    // shift 누른채 클릭하면
+                //console.log(selectedMesh.material.color);                
+                objects.splice(objects.indexOf(selectedMesh),1);//objects 에서 selectedMesh 제거
+                objects_color.splice(objects.indexOf(selectedMesh),1);
+                console.log("===isShiftDown objects===");
                 console.log(objects);
             }else{
-                //console.log(selectedMesh.material.color);
-                selectedMesh.material.color.set(0x0000ff);
+                // 이미 선택된 것을 다시 클릭하면 색상 원복하기
+                if(objects.length && objects.indexOf(selectedMesh) > -1){
+                    // 색상 원복하는 코드 넣기
+                    console.log("선택하지 않은 상태로 만들기");
+                    var selected_index = objects.indexOf(selectedMesh);
+                    var selected_object = objects[selected_index];
+                    var selected_object_origin_r = objects_color[selected_index].r;
+                    var selected_object_origin_g = objects_color[selected_index].g;
+                    var selected_object_origin_b = objects_color[selected_index].b;  
+                    selected_object.material.color.set(selected_object_origin_r,selected_object_origin_g,selected_object_origin_b);
+                    // 색상 원복 후, objects 와 objects_color에서 삭제
+                    objects.splice(objects.indexOf(selectedMesh),1);//objects 에서 selectedMesh 제거
+                    objects_color.splice(objects.indexOf(selectedMesh),1);
+                    return;
+                }
+                console.log("=== 선택한 상태로 만들기 ===");
                 objects.push(selectedMesh);
-                console.log(objects);
+                var copy_color = Object.assign({}, selectedMesh.material.color);//selectedMesh.material.color 의 deep copy
+                objects_color.push(copy_color);
+                selectedMesh.material.color.set(0x0000ff);
+                
+                const texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/132.png' ); 
+                const test_plane_material = new THREE.MeshBasicMaterial( { map:texture, transparent: true } );
+                let test_plane_geo = new THREE.PlaneGeometry(2,2,2);
+                //test_plane_geo.rotateX(-Math.PI/2);
+                //let test_plane = new THREE.Mesh(test_plane_geo, test_plane_material);
+                //scene.add(test_plane);
+
+
+                //const voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
+                const voxel = new THREE.Mesh(test_plane_geo, test_plane_material);  
+                const voxel_position = new THREE.Vector3(lycat.position.x, 1, lycat.position.z);              
+                voxel.position.copy(voxel_position);
+                //voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+                scene.add(voxel);
+                //objects.push(voxel);
+
+                let text = 'three.js',bevelEnabled = true,font = undefined,fontName = 'optimer',fontWeight = 'bold'; 
+
+			    const height = 2,size = 7,hover = 3,curveSegments = 4,bevelThickness = 2,bevelSize = 1.5;
+                const textGeo = new TextGeometry( text, {
+					font: font,
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: bevelEnabled
+				} );
+
+				textGeo.computeBoundingBox();
+
+				const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+
+				const textMesh1 = new THREE.Mesh( textGeo, new THREE.MeshPhongMaterial( { color: 0x000000 } ));
+
+				textMesh1.position.x = centerOffset;
+				textMesh1.position.y = hover;
+				textMesh1.position.z = 0;
+
+                scene.add(textMesh1);
+                
             }
             
+        }else{
+            console.log("=== objects===");
+            console.log(objects);
         }
         
         
@@ -293,6 +400,5 @@ function onDocumentKeyUp(event){
 function render() {
     renderer.render( scene, camera );
 }
-
 
 
