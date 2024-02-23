@@ -18,7 +18,11 @@ if(WebGL.isWebGLAvailable()){
     document.body.append(WebGL.getWebGLErrorMessage());
 }
 
+
+
 function init(){    
+    
+
     $result = document.querySelector('#result');
     // SCENE
     scene = new THREE.Scene();
@@ -56,6 +60,8 @@ function init(){
         onCameraChange();
         //mesh.position.copy(orbitControls.target.clone());
     });
+
+    
 
     const gui = new GUI();
     /* const folder3 = gui.addFolder('Orbit Controls');
@@ -244,6 +250,27 @@ function init(){
                 }
             })
         }, 3000);   
+
+
+
+        
+
+
+        const $view_range = document.querySelector('#view_range');
+        $view_range.max = 90;   // topview
+        $view_range.min = 45;   // sideview
+        $view_range.value = 90; // topview
+        $view_range.addEventListener('input',function(){
+            var radian = THREE.MathUtils.degToRad($view_range.value);   
+            camera.position.x = 0;        
+            camera.position.y = 50*Math.sin(radian);
+            camera.position.z = 50*Math.cos(radian);
+            camera.lookAt(0,0,0);
+        });
+        
+
+
+
     }
     
     loadMap();
@@ -331,6 +358,41 @@ function init(){
     gameLoop();
 
     window.addEventListener('resize', onWindowResize);   
+
+    const zoomInButton = document.getElementById("zoom-in");
+    const zoomOutButton = document.getElementById("zoom-out");
+    const zoomInFunction = (e) => {
+        const fov = getFov();
+        camera.fov = clickZoom(fov, "zoomIn");
+        camera.updateProjectionMatrix();
+    };
+    zoomInButton.addEventListener("click", zoomInFunction);
+
+    const zoomOutFunction = (e) => {
+        const fov = getFov();
+        camera.fov = clickZoom(fov, "zoomOut");
+        camera.updateProjectionMatrix();
+    };
+      
+    zoomOutButton.addEventListener("click", zoomOutFunction);
+    const clickZoom = (value, zoomType) => {
+        if (value >= 10 && zoomType === "zoomIn") {
+          return value - 10;
+        } else if (value <= 80 && zoomType === "zoomOut") {
+          return value + 10;
+        } else {
+          return value;
+        }
+    };
+      
+    const getFov = () => {
+        return Math.floor(
+            (2 *
+            Math.atan(camera.getFilmHeight() / 2 / camera.getFocalLength()) *
+            180) /
+            Math.PI
+        );
+    };
 }
 
 function onCameraChange()
@@ -398,6 +460,7 @@ function Agent(option){
     
     this.setPosition = function(x,z){
         this.agent_mesh.position.set(x,this.agentHeight/2,z);
+        //this.agent_mesh.position.set(x,0,z);
     }
     this.setPosition(option.x, option.z);
 

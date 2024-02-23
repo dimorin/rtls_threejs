@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="./src/css/style.css">
-    <style>
-        .ball{position:fixed;left:0;top:0;width:50px;height:50px;transform:translate(-50%, -50%);background:black;}
-    </style>
+    
     <!--es.modules.shism 폴리필-->
     <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.3/dist/es-module-shims.js"></script>
     <script type="importmap">
@@ -21,6 +19,7 @@
             }
         }
     </script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
 </head>
 <body>    
     <canvas id="result"></canvas>   
@@ -32,11 +31,17 @@
         <label><input type="radio" name="area" value="room3"> <span>공용룸</span></label>
         <label><input type="radio" name="area" value="room4"> <span>대표이사실</span></label>
     </div>
-    <div class="ball"></div>
-    <!-- <div class="ui">
+   
+    <div style="position:fixed;left:500px;top:0;padding:10px;">
+        <span>side view</span>
+        <input type="range" id="view_range">
+        <span>top view</span>
+        
         <button class="btn" id="zoom-out">-</button>
         <button class="btn" id="zoom-in">+</button>
-    </div> -->
+    </div>
+    
+    
     <script src="./src/js/pathfinding_speechbubble.js" type="module"></script>
 </body>
 </html>
@@ -44,4 +49,9 @@
 <!-- <div>출처 : https://youtu.be/0pCpRvoOTBs?si=QXoJT7DdbCvDN9WQ</div> -->
 <!--
 https://jsfiddle.net/meirm/kgxeuz24/186/
+<div>https://stackoverflow.com/questions/14015101/moving-3d-camera-up-and-down-around-a-central-point-in-threejs</div>
+남은 일
+1. camera position 제어 polar angle (탑뷰 - > 사이드뷰)
+2. 줌인 줌아웃
+3. agent y 위치 (처음부터 0.2로 하면 해결될까?)
 -->
