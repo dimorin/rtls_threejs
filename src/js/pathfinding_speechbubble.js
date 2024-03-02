@@ -126,19 +126,16 @@ function init(){
 
     // AGENT
     var agent;
-
-    var workers;
-    
-    var workers_mesh = [];
-    
- 
-
-     
+    var workers;    
+    var workers_mesh = [];    
  
     // Create level
     const pathfinding = new Pathfinding();
     const ZONE = 'level1';
     let navmesh;
+
+    let offsetX = 0;   
+    let offsetZ = 0;
 
     async function loadMap(){
         const gltfLoader = new GLTFLoader();
@@ -147,19 +144,17 @@ function init(){
             gltfLoader.loadAsync("./src/models/office_edgetoface_navmesh.glb"),
         ];      
         const [...model] = await Promise.all(promises);
-
+  
         // 지도와 지도의 navmesh가 모두 로드 된 후 할 일
-
-        // 1.
-        let office = model[0].scene;        
-        
+        // 1. 지도를 scene의 한가운데 위치시킨다.
+        let office = model[0].scene;             
 
         const boundingBox = new THREE.Box3().setFromObject(office);
         const size = new THREE.Vector3();
         boundingBox.getSize(size);
-        let offsetX = -size.x /2;   
-        let offsetZ = -size.z/2;
-        //console.log('offsetX : '+offsetX+' , offsetZ : '+offsetZ);
+        offsetX = -size.x /2;   
+        offsetZ = -size.z/2;
+        
         office.position.x = offsetX;
         office.position.z = offsetZ;
         scene.add(office);
@@ -175,16 +170,6 @@ function init(){
         room4.position.set(29+offsetX,0.1,14+offsetZ);
         scene.add(room4);
 
-        
-
-        // 2.
-        let office_navmesh = model[1].scene;        
-        //office_navmesh.position.x = offsetX;
-        //office_navmesh.position.z = offsetZ;
-        //scene.add(office_navmesh);
-        
-
-
         agent = new Agent({objectType:'man', name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
         workers = [
             {objectType:'man', name:'tom',color:'yellow',x:10+offsetX,z:5+offsetZ},
@@ -199,23 +184,6 @@ function init(){
             workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));        
         });
 
-        office_navmesh.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
-            
-            if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {
-                
-                navmesh = node.children[0];
-                //console.log(navmesh)
-                navmesh.geometry.translate(offsetX,0,offsetZ);
-                
-                //scene.add(navmesh);
-                pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));// Create level의 일환
-                agent.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
-                workers_mesh.forEach(function(worker_mesh){
-                    worker_mesh.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
-                })
-            }
-        });
-        
         for(var i = 0; i <= workers_mesh.length; i++){        
             var mesh;
             if(i === workers_mesh.length){
@@ -229,7 +197,6 @@ function init(){
             divElem.innerHTML = mesh.name;
             document.body.appendChild(divElem);
             var divObj = new THREE.Object3D();
-            //divObj.position = mesh.vertices[0].clone();
             mesh.add(divObj);
             
             var objData = {
@@ -240,64 +207,16 @@ function init(){
             objArr.push(objData);
         }
 
-
-        // 3.
-        setInterval(function(){
-            workers_mesh.forEach(function(worker_mesh){
-                var new_position = new THREE.Vector3((Math.random()*20)+10+offsetX, 0, Math.floor(Math.random()*10)+2+offsetZ);
-                if(navmesh){
-                    worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
-                }
-            })
-        }, 3000);   
-
-
-
-        
-
-
-        const $view_range = document.querySelector('#view_range');
-        $view_range.max = 90;   // topview
-        $view_range.min = 45;   // sideview
-        $view_range.value = 90; // topview
-        $view_range.addEventListener('input',function(){
-            var radian = THREE.MathUtils.degToRad($view_range.value);   
-            camera.position.x = 0;        
-            camera.position.y = 50*Math.sin(radian);
-            camera.position.z = 50*Math.cos(radian);
-            camera.lookAt(0,0,0);
-        });
-        
-
-
-
-    }
-    
-    loadMap();
-
-
-    /* gltfLoader.load('./src/models/office_edgetoface.glb', function(gltf){
-        let office = gltf.scene;
-        scene.add(office);
-        const boundingBox = new THREE.Box3().setFromObject(office);
-        const size = new THREE.Vector3();
-        boundingBox.getSize(size);
-        console.log('office size:', size.x, size.y, size.z);
-        //office.position.x = -size.x /2;
-        //office.position.z = -size.z/2;
-        console.log("---load office");
-    }); */
- 
-    // Create level
-    /* const pathfinding = new Pathfinding();
-    const ZONE = 'level1';
-    let navmesh;  
-    
-    gltfLoader.load('./src/models/office_edgetoface_navmesh.glb', function(gltf){    
-        console.log("---load office nav mesh");
-        gltf.scene.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
+        // 2. office_navmesh의 중심점 이동(정점만 이동)
+        let office_navmesh = model[1].scene;         
+        office_navmesh.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
             if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {
+                
                 navmesh = node.children[0];
+                //console.log(navmesh)
+                navmesh.geometry.translate(offsetX,0,offsetZ);  // translate : geometry 객체의 정점들만 상대적으로 이동
+                
+                //scene.add(navmesh);
                 pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));// Create level의 일환
                 agent.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
                 workers_mesh.forEach(function(worker_mesh){
@@ -305,7 +224,24 @@ function init(){
                 })
             }
         });
-    }); */
+
+        // 3. worker 위치 random
+        randomWorkerPosition();
+        setInterval(randomWorkerPosition, 3000);   
+    }
+    
+    loadMap();
+
+    function randomWorkerPosition(){
+        workers_mesh.forEach(function(worker_mesh){
+            var new_position = new THREE.Vector3((Math.random()*20)+10+offsetX, 0, Math.floor(Math.random()*10)+2+offsetZ);
+            if(navmesh){
+                worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
+            }
+        })
+    }
+
+    
     
     // RAYCASTING
     const raycaster = new THREE.Raycaster(); // create once
@@ -393,6 +329,18 @@ function init(){
             Math.PI
         );
     };
+
+    const $view_range = document.querySelector('#view_range');
+        $view_range.max = 90;   // topview
+        $view_range.min = 45;   // sideview
+        $view_range.value = 90; // topview
+        $view_range.addEventListener('input',function(){
+            var radian = THREE.MathUtils.degToRad($view_range.value);   
+            camera.position.x = 0;        
+            camera.position.y = 50*Math.sin(radian);
+            camera.position.z = 50*Math.cos(radian);
+            camera.lookAt(0,0,0);
+        });
 }
 
 function onCameraChange()
@@ -458,11 +406,8 @@ function Agent(option){
     this.agent_mesh.objectType = this.objectType;
     scene.add(this.agent_mesh);           
     
-    this.setPosition = function(x,z){
-        this.agent_mesh.position.set(x,this.agentHeight/2,z);
-        //this.agent_mesh.position.set(x,0,z);
-    }
-    this.setPosition(option.x, option.z);
+    this.agent_mesh.geometry.translate(0,this.agentHeight/2,0);    
+    this.agent_mesh.position.set(option.x,0,option.z);
 
     this.pathfinding = new Pathfinding();
     this.pathfindinghelper = new PathfindingHelper();
@@ -511,3 +456,39 @@ function Agent(option){
         }
     }
 }
+
+
+/* 
+    //polling
+    var pollingID_dashboard;
+    var pollingInterval_dashboard = 1000; //1초  
+    getDashboard();
+    startPolling_dashboard();
+
+    function startPolling_dashboard(){
+        pollingID_dashboard = setInterval(function(){
+            getDashboard();          
+        }, pollingInterval_dashboard);
+    }  
+    function stopPolling_dashboard(){
+        clearInterval(pollingID_dashboard);
+    } 
+   
+    function getDashboard(){               
+        var url = "";
+        var param = {};
+        return;
+        $.ajax({
+            url:url,
+            type : 'POST',
+            dataType:'json',
+            data : JSON.stringify(param),
+            contentType: 'application/json',
+            success : function(data){                 
+                //update                        
+            },
+            error : function(data){                             
+            }
+        });            
+    } 
+*/  
