@@ -11,6 +11,7 @@ import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
 let $result;
 let scene, camera, renderer, orbitControls;
 var objArr = [];
+
 if(WebGL.isWebGLAvailable()){    
     init();
 }else{
@@ -18,19 +19,16 @@ if(WebGL.isWebGLAvailable()){
     document.body.append(WebGL.getWebGLErrorMessage());
 }
 
-
-
-function init(){    
-    
-
+function init(){  
     $result = document.querySelector('#result');
+
     // SCENE
     scene = new THREE.Scene();
-    scene.background = new THREE.Color('lightgoldenrodyellow');
+    scene.background = new THREE.Color('#eeeeee');
 
     // CAMERA
     camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0,50,0);//camera.position.set(33,10,10);
+    camera.position.set(0,50,0);
     camera.lookAt(0,0,0);
     
     // RENDERER
@@ -53,29 +51,16 @@ function init(){
     orbitControls.enablePan = true;
     orbitControls.minDistance = 5;
     orbitControls.maxDistance = 60;
-    orbitControls.minPolarAngle = 0;        // prevent to down view
+    orbitControls.minPolarAngle = 0;                // prevent to down view
     orbitControls.maxPolarAngle = Math.PI/2 - 0.05; // prevent camera below ground
     orbitControls.update();
     orbitControls.addEventListener('change', function() {
         onCameraChange();
-        //mesh.position.copy(orbitControls.target.clone());
     });
 
     
 
-    const gui = new GUI();
-    /* const folder3 = gui.addFolder('Orbit Controls');
-    folder3.add(orbitControls,'enabled');
-    folder3.add(orbitControls,'enableDamping');
-    folder3.add(orbitControls,'enablePan');
-    folder3.add(orbitControls,'enableRotate');
-    folder3.add(orbitControls,'enableZoom');
-    folder3.add(orbitControls,'minPolarAngle', 0, Math.PI);
-    folder3.add(orbitControls,'maxPolarAngle', 0, Math.PI);
-    const folder1 = gui.addFolder('camera.position');
-    folder1.add(camera.position, 'x', -50, 50);
-    folder1.add(camera.position, 'y', -50, 50);
-    folder1.add(camera.position, 'z', -50, 50); */
+    
     
     
 
@@ -193,6 +178,7 @@ function init(){
             }
             var divElem = document.createElement('div');
             divElem.style.position = 'absolute';
+            divElem.style.transform = 'translateX(-50%)';
             divElem.style.color = 'black';
             divElem.innerHTML = mesh.name;
             document.body.appendChild(divElem);
@@ -273,9 +259,9 @@ function init(){
         }
     });
 
-    // GAMELOOP
+    // draw
     const clock = new THREE.Clock();
-    function gameLoop(){        
+    function draw(){        
         var delta = clock.getDelta();
         if(agent){
             agent.move(delta);
@@ -286,61 +272,41 @@ function init(){
             worker_mesh.move(delta);
         })
 
-        renderer.setAnimationLoop(gameLoop);
+        renderer.setAnimationLoop(draw);
         orbitControls.update();
         onCameraChange();
-        render();
+        renderer.render( scene, camera );
     }
-    gameLoop();
+    draw();
 
     window.addEventListener('resize', onWindowResize);   
 
-    const zoomInButton = document.getElementById("zoom-in");
-    const zoomOutButton = document.getElementById("zoom-out");
-    const zoomInFunction = (e) => {
-        const fov = getFov();
-        camera.fov = clickZoom(fov, "zoomIn");
-        camera.updateProjectionMatrix();
-    };
-    zoomInButton.addEventListener("click", zoomInFunction);
-
-    const zoomOutFunction = (e) => {
-        const fov = getFov();
-        camera.fov = clickZoom(fov, "zoomOut");
-        camera.updateProjectionMatrix();
-    };
-      
-    zoomOutButton.addEventListener("click", zoomOutFunction);
-    const clickZoom = (value, zoomType) => {
-        if (value >= 10 && zoomType === "zoomIn") {
-          return value - 10;
-        } else if (value <= 80 && zoomType === "zoomOut") {
-          return value + 10;
-        } else {
-          return value;
-        }
-    };
-      
-    const getFov = () => {
-        return Math.floor(
-            (2 *
-            Math.atan(camera.getFilmHeight() / 2 / camera.getFocalLength()) *
-            180) /
-            Math.PI
-        );
-    };
-
     const $view_range = document.querySelector('#view_range');
-        $view_range.max = 90;   // topview
-        $view_range.min = 45;   // sideview
-        $view_range.value = 90; // topview
-        $view_range.addEventListener('input',function(){
-            var radian = THREE.MathUtils.degToRad($view_range.value);   
-            camera.position.x = 0;        
-            camera.position.y = 50*Math.sin(radian);
-            camera.position.z = 50*Math.cos(radian);
-            camera.lookAt(0,0,0);
-        });
+    $view_range.max = 90;   // topview
+    $view_range.min = 45;   // sideview
+    $view_range.value = 90; // topview
+    $view_range.addEventListener('input',function(){
+        var radian = THREE.MathUtils.degToRad($view_range.value);   
+        camera.position.x = 0;        
+        camera.position.y = 50*Math.sin(radian);
+        camera.position.z = 50*Math.cos(radian);
+        camera.lookAt(0,0,0);
+    });
+
+    const $scale_range = document.querySelector('#scale_range');
+    $scale_range.max = 65;   
+    $scale_range.min = 25;   
+    $scale_range.value = 45; 
+    $scale_range.addEventListener('input',function(){
+        camera.fov = $scale_range.value;
+        camera.updateProjectionMatrix();
+    });
+
+    /* const gui = new GUI();    
+    const folder1 = gui.addFolder('camera.position');
+    folder1.add(camera.position, 'x', -50, 50);
+    folder1.add(camera.position, 'y', -50, 50);
+    folder1.add(camera.position, 'z', -50, 50); */
 }
 
 function onCameraChange()
@@ -354,10 +320,6 @@ function onCameraChange()
         
     });
 }
-
-
-
-
 
 function toScreenPosition(obj, camera)
 {
@@ -382,16 +344,16 @@ function toScreenPosition(obj, camera)
     };
 
 }
+
 function onWindowResize(){
+    console.log("onWindowResize--------");
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    render();
-}
-
-function render() {
     renderer.render( scene, camera );
 }
+
+
 
 function Agent(option){     
     this.agentHeight = 1.0;

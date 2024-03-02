@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>위치추적</title>
     <link rel="stylesheet" href="./src/css/style.css">
     
     <!--es.modules.shism 폴리필-->
@@ -23,8 +23,7 @@
 </head>
 <body>    
     <canvas id="result"></canvas>   
-    <div style="position:fixed;left:0;top:0;padding:10px;">
-        <h1>길찾기</h1>
+    <div style="position:fixed;left:10px;bottom:50px;">
         <label><input type="radio" name="area" value="room0"> <span>현관</span></label>
         <label><input type="radio" name="area" value="room1"> <span>회의실</span></label>
         <label><input type="radio" name="area" value="room2"> <span>연구소</span></label>
@@ -32,13 +31,13 @@
         <label><input type="radio" name="area" value="room4"> <span>대표이사실</span></label>
     </div>
    
-    <div style="position:fixed;left:500px;top:0;padding:10px;">
-        <span>side view</span>
-        <input type="range" id="view_range">
-        <span>top view</span>
-        
-        <button class="btn" id="zoom-out">-</button>
-        <button class="btn" id="zoom-in">+</button>
+    <div style="position:fixed;right:0px;bottom:50px;">
+        <div title="view">
+            <input type="range" id="view_range" style="transform:translateY(-40px) rotate(-90deg);">
+        </div>
+        <div title="scale" style="position:absolute;right:100px;">
+            <input type="range" id="scale_range" style="transform:rotate(180deg);">
+        </div>
     </div>
     
     
