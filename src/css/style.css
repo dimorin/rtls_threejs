@@ -11,8 +11,8 @@ html{
 #result{width:100%;height:100%;}
 .worker_name{position:absolute;font-size:1.4rem;color:black;transform:translate(-50%, 0);}
 .ui{position:absolute;left:10px;bottom:10px;font-size:1.4rem;display:flex;flex-wrap:nowrap;align-items:center;}
-.mobile .guide_mouse{display:none !important;}
-
+.camera_control{display:none;align-items:center;}
+.desktop .camera_control{display:flex;}
 @media (max-width: 850px) {
 	.ui {flex-wrap:wrap;}
 }

@@ -12,36 +12,46 @@ let $result;
 let scene, camera, renderer, orbitControls;
 let objArr = [];
 let main_element = document.querySelector('.main');
+const $view_range = document.querySelector('#view_range');
+const $scale_range = document.querySelector('#scale_range');
+const $btn_init_camera = document.querySelector('.btn_init_camera');
+const areas = document.querySelectorAll('input[name=area]');
+let device = 'desktop';
+var checked_radio;
 
 if(WebGL.isWebGLAvailable()){    
-    init();
+    init();   
+    setDevice(); 
 }else{
     document.querySelector('#result').remove();
     main_element.append(WebGL.getWebGLErrorMessage());
 }
 
-let device = 'desktop';
+
 function setDevice(){
     const htmlElem = document.querySelector('html');
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+    
     if (isMobileDevice) {
         device = 'mobile';
         htmlElem.classList.remove('desktop');
         htmlElem.classList.add('mobile');
+        orbitControls.enabled = true;
     } else {
         device = 'desktop';
         htmlElem.classList.remove('mobile');
         htmlElem.classList.add('desktop');
+        orbitControls.enabled = false;
     }
 }
-setDevice();
+
 
 
 
 
 
 function init(){  
+    
     $result = document.querySelector('#result');
 
     // SCENE
@@ -79,7 +89,8 @@ function init(){
     orbitControls.addEventListener('change', function() {
         onCameraChange();
     });
-    orbitControls.saveState ();
+    orbitControls.saveState();
+    
 
     // LIGHTS
     const dLight = new THREE.DirectionalLight('white', 0.8);
@@ -262,7 +273,7 @@ function init(){
         return raycaster.intersectObjects(scene.children);
     }
 
-    var areas = document.querySelectorAll('input[name=area]');
+    
     areas.forEach(function(area){
         area.addEventListener('change', function(){               
             agent.findNav(agent.agent_mesh.position, scene.getObjectByName(area.value).position, ZONE);
@@ -276,16 +287,21 @@ function init(){
     
         const found = intersect(clickMouse);
         
-        if (found.length > 0) {
-            
+        if (found.length > 0) {            
             let target_position = found[0].point;     
             agent.findNav(agent.agent_mesh.position, target_position, ZONE);
+
+            checked_radio = document.querySelector('input[type=radio][name=area]:checked');
+            if(checked_radio){
+                checked_radio.checked = false;
+            }
         }
     });
 
     // draw
     const clock = new THREE.Clock();
-    function draw(){        
+    function draw(){    
+            
         var delta = clock.getDelta();
         if(agent){
             agent.move(delta);
@@ -307,7 +323,7 @@ function init(){
 
     window.addEventListener('resize', onWindowResize);   
 
-    const $view_range = document.querySelector('#view_range');
+    
     $view_range.max = 90;   // topview
     $view_range.min = 45;   // sideview
     $view_range.value = 90; // topview
@@ -319,7 +335,7 @@ function init(){
         camera.lookAt(0,0,0);
     });
 
-    const $scale_range = document.querySelector('#scale_range');
+    
     $scale_range.max = 65;   
     $scale_range.min = 25;   
     $scale_range.value = 45; 
@@ -328,14 +344,8 @@ function init(){
         camera.updateProjectionMatrix();
     });
 
-    const $btn_init_camera = document.querySelector('.btn_init_camera');
-    $btn_init_camera.addEventListener('click', function(){
-        /* camera.position.set(0,50,0);
-        camera.fov = 45;
-        camera.lookAt(0,0,0);
-        camera.updateProjectionMatrix(); */
-        orbitControls.reset();
-    })
+    
+    $btn_init_camera.addEventListener('click', init_camera)
 
     /* const gui = new GUI();    
     const folder1 = gui.addFolder('dLight.position');
@@ -343,7 +353,19 @@ function init(){
     folder1.add(dLight.position, 'y', -50, 50);
     folder1.add(dLight.position, 'z', -50, 50); */
 }
-
+function init_camera(){        
+    orbitControls.reset();
+    if(device === 'desktop'){
+        camera.position.x = 0;        
+        camera.position.y = 50*Math.sin(Math.PI/2);
+        camera.position.z = 50*Math.cos(Math.PI/2);            
+        camera.fov = 45;
+        camera.lookAt(0,0,0);
+        camera.updateProjectionMatrix();
+        $view_range.value = 90;
+        $scale_range.value = 45; 
+    }        
+}
 function onCameraChange()
 {
     objArr.forEach(function(objData) {
@@ -382,6 +404,7 @@ function toScreenPosition(obj, camera)
 
 function onWindowResize(){    
     setDevice();
+    init_camera();
     if (window.matchMedia('(orientation: portrait)').matches) {
 		// Portrait 모드일 때 실행할 스크립트
 		// 폭과 높이가 같으면 Portrait 모드로 인식돼요
