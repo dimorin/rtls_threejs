@@ -23,21 +23,41 @@
 <body>    
     <div class="main">
         <canvas id="result"></canvas>   
-        <div style="position:absolute;left:10px;bottom:50px; font-size:1.4rem;">
-            <label><input type="radio" name="area" value="room0"> <span>현관</span></label>
-            <label><input type="radio" name="area" value="room1"> <span>회의실</span></label>
-            <label><input type="radio" name="area" value="room2"> <span>연구소</span></label>
-            <label><input type="radio" name="area" value="room3"> <span>공용룸</span></label>
-            <label><input type="radio" name="area" value="room4"> <span>대표이사실</span></label>
+        <div class="ui" style="">
+            <div>
+                <label style="display:inline-block;margin:0 5px;"><input type="radio" name="area" value="room0" checked> <span>현관</span></label>
+                <label style="display:inline-block;margin:0 5px;"><input type="radio" name="area" value="room1"> <span>회의실</span></label>
+                <label style="display:inline-block;margin:0 5px;"><input type="radio" name="area" value="room2"> <span>연구소</span></label>
+                <label style="display:inline-block;margin:0 5px;"><input type="radio" name="area" value="room3"> <span>공용룸</span></label>
+                <label style="display:inline-block;margin:0 5px;"><input type="radio" name="area" value="room4"> <span>대표이사실</span></label>
+            </div>            
+            <div style="display:flex;align-items:center;">
+                <div title="view" style="display:flex;align-items:center;margin:0 5px;">
+                    <span style="display:inline-block;margin:0 5px;">side view</span>
+                    <input type="range" id="view_range" style="">
+                    <span style="display:inline-block;margin:0 5px;">top view</span>
+                </div>
+                <div title="scale" style="display:flex;align-items:center;margin:0 5px;">
+                    <span style="display:inline-block;margin:0 5px;">+</span>
+                    <input type="range" id="scale_range" style="">
+                    <span style="display:inline-block;margin:0 5px;">-</span>
+                </div>
+            </div>
         </div>
-    
-        <div style="position:absolute;right:0px;bottom:50px;">
-            <div title="view">
-                <input type="range" id="view_range" style="transform:translateY(-40px) rotate(-90deg);">
+        <div class="guide_mouse" style="position:absolute;right:10px;bottom:10px;font-size:1.4rem;display:flex;align-items:center;">   
+            <div style="position:relative;display:inline-block;width:58px;margin:0 5px;">
+                <img src="./src/img/move.png">
+                <span style="position:absolute;left:50%;bottom:25px;transform:translate(-50%, 0);">이동</span>
             </div>
-            <div title="scale" style="position:absolute;right:100px;">
-                <input type="range" id="scale_range" style="transform:rotate(180deg);">
+            <div style="position:relative;display:inline-block;width:58px;margin:0 5px;">
+                <img src="./src/img/scale.png">
+                <span style="position:absolute;left:50%;bottom:25px;transform:translate(-50%, 0);white-space: nowrap;">확대·축소</span>
             </div>
+            <div style="position:relative;display:inline-block;width:58px;margin:0 5px;">
+                <img src="./src/img/rotation.png">
+                <span style="position:absolute;left:50%;bottom:25px;transform:translate(-50%, 0);">회전</span>
+            </div>
+            <button class="btn_init_camera" style="display:inline-block;width:80px;height:80px;background:#FCB021;outline:none;border:1px solid #000000;cursor:pointer;margin:0 5px;">초기화</button> 
         </div>
     </div>
     

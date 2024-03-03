@@ -20,6 +20,27 @@ if(WebGL.isWebGLAvailable()){
     main_element.append(WebGL.getWebGLErrorMessage());
 }
 
+let device = 'desktop';
+function setDevice(){
+    const htmlElem = document.querySelector('html');
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobileDevice) {
+        device = 'mobile';
+        htmlElem.classList.remove('desktop');
+        htmlElem.classList.add('mobile');
+    } else {
+        device = 'desktop';
+        htmlElem.classList.remove('mobile');
+        htmlElem.classList.add('desktop');
+    }
+}
+setDevice();
+
+
+
+
+
 function init(){  
     $result = document.querySelector('#result');
 
@@ -58,6 +79,7 @@ function init(){
     orbitControls.addEventListener('change', function() {
         onCameraChange();
     });
+    orbitControls.saveState ();
 
     // LIGHTS
     const dLight = new THREE.DirectionalLight('white', 0.8);
@@ -278,9 +300,10 @@ function init(){
         orbitControls.update();
         onCameraChange();
         renderer.render( scene, camera );
-        renderer.setAnimationLoop(draw);
+        renderer.setAnimationLoop(draw);        
     }
     draw();
+    
 
     window.addEventListener('resize', onWindowResize);   
 
@@ -304,6 +327,15 @@ function init(){
         camera.fov = $scale_range.value;
         camera.updateProjectionMatrix();
     });
+
+    const $btn_init_camera = document.querySelector('.btn_init_camera');
+    $btn_init_camera.addEventListener('click', function(){
+        /* camera.position.set(0,50,0);
+        camera.fov = 45;
+        camera.lookAt(0,0,0);
+        camera.updateProjectionMatrix(); */
+        orbitControls.reset();
+    })
 
     /* const gui = new GUI();    
     const folder1 = gui.addFolder('dLight.position');
@@ -348,15 +380,15 @@ function toScreenPosition(obj, camera)
 
 }
 
-function onWindowResize(){
-    console.log("onWindowResize--------");
+function onWindowResize(){    
+    setDevice();
     if (window.matchMedia('(orientation: portrait)').matches) {
 		// Portrait 모드일 때 실행할 스크립트
 		// 폭과 높이가 같으면 Portrait 모드로 인식돼요
-        console.log("Portrait");
+        //console.log("Portrait");
 	} else {
 		// Landscape 모드일 때 실행할 스크립트
-        console.log("Landscape");
+        //console.log("Landscape");
 	}
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
