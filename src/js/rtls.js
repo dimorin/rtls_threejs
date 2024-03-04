@@ -2,8 +2,6 @@ import * as THREE from "three";
 import WebGL from "three/addons/capabilities/WebGL.js"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-import {FontLoader} from 'three/addons/loaders/FontLoader.js';
 /* import * as dat from '../../node_modules/lil-gui/dist/lil-gui.esm.js' */
 import GUI from 'lil-gui';
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
@@ -109,8 +107,8 @@ function init(){
     scene.add(aLight);
 
     // axes
-    const axesHelper = new THREE.AxesHelper(10);
-    scene.add(axesHelper);
+    /* const axesHelper = new THREE.AxesHelper(10);
+    scene.add(axesHelper); */
 
     // 현관
     const room0 = new THREE.Mesh(new THREE.CircleGeometry(1), new THREE.MeshPhongMaterial({color:'darkseagreen', side:THREE.DoubleSide}));
@@ -188,18 +186,18 @@ function init(){
         room4.position.set(29+offsetX,0.1,14+offsetZ);
         scene.add(room4);
 
-        agent = new Agent({objectType:'man', name:'agent',color:'green',x:room0.position.x,z:room0.position.z});
+        agent = new Agent({objectType:'man', name:'길잡이',img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/004301.png',color:'green',x:room0.position.x,z:room0.position.z});
         workers = [
-            {objectType:'man', name:'tom',color:'yellow',x:10+offsetX,z:5+offsetZ},
-            {objectType:'man', name:'bob',color:'blue',x:15+offsetX,z:8+offsetZ},
-            {objectType:'man', name:'duke',color:'orange',x:30+offsetX,z:10+offsetZ},
-            {objectType:'man', name:'jake',color:'olive',x:20+offsetX,z:15+offsetZ},
-            {objectType:'man', name:'brad',color:'purple',x:25+offsetX,z:14+offsetZ},
-            {objectType:'man', name:'mary',color:'pink',x:28+offsetX,z:12+offsetZ}
+            {objectType:'man', name:'피카츄', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/002501.png', color:'yellow',x:10+offsetX,z:5+offsetZ},
+            {objectType:'man', name:'파이리', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/000401.png', color:'orange',x:15+offsetX,z:8+offsetZ},
+            {objectType:'man', name:'꼬부기', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/000701.png', color:'blue',x:30+offsetX,z:10+offsetZ},
+            {objectType:'man', name:'캐터피', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/001001.png', color:'olive',x:20+offsetX,z:15+offsetZ},
+            {objectType:'man', name:'이브이', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/013301.png', color:'purple',x:25+offsetX,z:14+offsetZ},
+            {objectType:'man', name:'푸푸린', img:'https://data1.pokemonkorea.co.kr/newdata/pokedex/full/017401.png', color:'pink',x:28+offsetX,z:12+offsetZ}
         ];
 
         workers.forEach(function(worker){
-            workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));        
+            workers_mesh.push(new Agent({objectType:worker.objectType, name:worker.name, img:worker.img, color:worker.color, x:worker.x, z:worker.z, isPathfindingHelper:false, type:'random'}));        
         });
 
         for(var i = 0; i <= workers_mesh.length; i++){        
@@ -207,15 +205,15 @@ function init(){
             if(i === workers_mesh.length){
                 mesh = agent.agent_mesh;
             }else{
-                mesh = workers_mesh[i].agent_mesh;
+                mesh = workers_mesh[i].agent_mesh;                
             }
             var divElem = document.createElement('div');
             divElem.classList.add('worker_name');
             /* divElem.style.position = 'absolute';
             divElem.style.transform = 'translate(-50%,0)';
             divElem.style.color = 'black'; */
-            divElem.innerHTML = mesh.name;
-            
+            //divElem.innerHTML = mesh.name;
+            divElem.innerHTML = `<div style="width:10%;white-space: nowrap;">${mesh.name}</div><img src="${mesh.img}" style="display:block;position: absolute;left: 50%;transform: translate(-50%, 0);width: 70%;">`
             main_element.appendChild(divElem);
             var divObj = new THREE.Object3D();
             mesh.add(divObj);
@@ -231,13 +229,10 @@ function init(){
         // 2. office_navmesh의 중심점 이동(정점만 이동)
         let office_navmesh = model[1].scene;         
         office_navmesh.traverse((node) => { // traverse 함수는 forEach 처럼 scene의 child 항목들을 반복적으로 검사하는 기능을 수행한다.
-            if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {
-                
+            if (!navmesh && node.isObject3D && node.children && node.children.length > 0) {                
                 navmesh = node.children[0];
-                //console.log(navmesh)
-                navmesh.geometry.translate(offsetX,0,offsetZ);  // translate : geometry 객체의 정점들만 상대적으로 이동
-                
-                //scene.add(navmesh);
+                navmesh.geometry.translate(offsetX,0,offsetZ);  // translate : geometry 객체의 정점들만 상대적으로 이동                
+               
                 pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));// Create level의 일환
                 agent.pathfinding.setZoneData(ZONE, Pathfinding.createZone(navmesh.geometry));
                 workers_mesh.forEach(function(worker_mesh){
@@ -245,7 +240,7 @@ function init(){
                 })
             }
         });
-
+        
         // 3. worker 위치 random
         randomWorkerPosition();
         setInterval(randomWorkerPosition, 3000);   
@@ -253,10 +248,11 @@ function init(){
     
     loadMap();
 
-    function randomWorkerPosition(){
+    function randomWorkerPosition(){        
         workers_mesh.forEach(function(worker_mesh){
-            var new_position = new THREE.Vector3((Math.random()*20)+10+offsetX, 0, Math.floor(Math.random()*10)+2+offsetZ);
+            var new_position = new THREE.Vector3((Math.random()*20)+10+offsetX, 0, Math.floor(Math.random()*12)+2+offsetZ);
             if(navmesh){
+                //console.log("--worker_mesh.agent_mesh.position "+JSON.stringify(worker_mesh.agent_mesh.position));
                 worker_mesh.findNav(worker_mesh.agent_mesh.position, new_position, ZONE);
             }
         })
@@ -347,6 +343,19 @@ function init(){
     
     $btn_init_camera.addEventListener('click', init_camera)
 
+    var $btn_toggle_name = document.querySelector('.btn_toggle_name');    
+    $btn_toggle_name.addEventListener('click', function(){
+        var $worker_names = document.querySelectorAll('.worker_name');
+        $worker_names.forEach(element => {
+            if (element.style.display === 'none') {
+                element.style.display = 'block'; // 보이게 설정
+                $btn_toggle_name.textContent = '명찰 숨기기';
+            } else {
+                element.style.display = 'none'; // 숨기게 설정
+                $btn_toggle_name.textContent = '명찰 보기';
+            }
+        });
+    });
     /* const gui = new GUI();    
     const folder1 = gui.addFolder('dLight.position');
     folder1.add(dLight.position, 'x', -50, 50);
@@ -424,13 +433,15 @@ function onWindowResize(){
 function Agent(option){     
     this.agentHeight = 1.0;
     this.agentRadius = 0.2;   
-    this.name = option.name;   
+    this.name = option.name;  
+    this.img = option.img; 
     this.objectType = option.objectType; 
     this.speed = 3;
     this.isPathfindingHelper = (option.isPathfindingHelper === false) ? false : true;
     this.type = option.type;
     this.agent_mesh = new THREE.Mesh(new THREE.CylinderGeometry(this.agentRadius, this.agentRadius, this.agentHeight), new THREE.MeshPhongMaterial({color:option.color}));
     this.agent_mesh.name = this.name;
+    this.agent_mesh.img = this.img;
     this.agent_mesh.objectType = this.objectType;
     this.agent_mesh.castShadow = true;
     this.agent_mesh.receiveShadow = true;
